@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>deejai</title>
+<link rel="stylesheet" href="style.css?v=42" />
+</head>
+<body>
+<header id="transport">
+  <div class="brand">deej<span>ai</span></div>
+  <button id="play" class="tbtn" title="play / stop (space)">▶</button>
+  <button id="rec" class="tbtn" title="record a take (sings over the mix — use headphones)">●&nbsp;rec</button>
+  <button id="monitor" class="tbtn toggle" title="input monitoring: hear the mic live through the armed track">◎ mon</button>
+  <button id="loop" class="tbtn toggle" title="loop the whole song">↻</button>
+  <button id="cycle" class="tbtn toggle" title="cycle: loop a region (shift-drag the ruler to set it)">cycle</button>
+  <button id="add-marker" class="tbtn" title="add an arrangement marker at the playhead">⚑</button>
+  <button id="undo" class="tbtn" title="undo (⌘Z)" disabled>↶</button>
+  <button id="redo" class="tbtn" title="redo (⌘⇧Z)" disabled>↷</button>
+  <span class="zoomgrp">
+    <button id="zoom-out" class="tbtn" title="zoom out">−</button>
+    <button id="zoom-in" class="tbtn" title="zoom in">+</button>
+    <button id="zoom-fit" class="tbtn" title="fit to window">fit</button>
+    <button id="snap" class="tbtn toggle on" title="snap to grid">snap</button>
+  </span>
+  <span class="zoomgrp">
+    <button id="metro" class="tbtn toggle" title="metronome click">click</button>
+    <button id="countin" class="tbtn toggle on" title="count-in a bar before recording">count-in</button>
+    <label class="numlbl" title="nudge recorded takes earlier if they land late, later if they land early (audio-latency compensation)">rec offset (ms)<input id="recoffset" type="number" min="0" max="250" step="5" value="90" /></label>
+    <label class="numlbl">bpm<input id="bpm" type="number" min="40" max="240" step="1" value="100" /></label>
+    <label class="numlbl">time<span class="tsrow"><select id="bpb"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>9</option><option>12</option></select><span class="tsslash">/</span><select id="bunit"><option>2</option><option selected>4</option><option>8</option><option>16</option></select></span></label>
+  </span>
+  <div class="readout">
+    <div><span class="lbl">tempo</span><span id="tempo">—</span></div>
+    <div><span class="lbl">key</span><span id="key">—</span></div>
+    <div><span class="lbl">parser</span><span id="parser">—</span></div>
+  </div>
+  <div class="master">
+    <span class="lbl">master</span>
+    <input id="master" type="range" min="0" max="1.4" step="0.01" value="1" />
+    <span id="master-db" class="mini">0 dB</span>
+    <span id="master-meter" class="meter"><i></i></span>
+  </div>
+  <label class="tbtn" title="import your own WAV takes">
+    import takes<input id="file" type="file" accept="audio/wav,.wav" multiple hidden />
+  </label>
+  <button id="add-inst" class="tbtn" title="add a software-instrument track">+ inst</button>
+  <button id="drummer-btn" class="tbtn" title="generate a drum performance">🥁 drummer</button>
+  <button id="align-btn" class="tbtn" title="align takes to the beat + pitch-correct">align</button>
+  <button id="tempo-btn" class="tbtn toggle" title="tempo track (tempo changes over the song)">tempo</button>
+  <button id="loops-btn" class="tbtn toggle" title="loop / sound browser">loops</button>
+  <button id="save" class="tbtn" title="save this project to a file">save</button>
+  <label class="tbtn" title="open a saved .deejai project">open<input id="project-file" type="file" accept=".json,.deejai" hidden /></label>
+  <button id="export" class="tbtn" title="download the mix as a WAV, exactly as you hear it">export wav</button>
+  <button id="export-c" class="tbtn" title="download a smaller compressed mix to share">share</button>
+  <button id="help-btn" class="tbtn" title="keyboard shortcuts &amp; tips">?</button>
+  <span id="status" class="status"></span>
+</header>
+
+<main>
+ <div id="stage">
+  <section id="tracks-pane">
+    <div id="ruler"><div class="ruler-corner"></div><canvas id="ruler-inner"></canvas></div>
+    <div id="tracks"><div id="tempo-lane" class="hidden"><div class="tempo-head">tempo <span class="thint">click to add · drag · alt-click removes</span></div><canvas id="tempo-canvas"></canvas></div><div id="rows"></div><div id="playhead"></div></div>
+    <div id="drop">drop your vocal takes here, or use “import takes”</div>
+  </section>
+
+  <aside id="loops">
+    <div class="loops-head">loops &amp; sounds</div>
+    <div id="loops-cats" class="loops-cats">
+      <button data-cat="all" class="on">all</button>
+      <button data-cat="drums">drums</button>
+      <button data-cat="bass">bass</button>
+      <button data-cat="chords">chords</button>
+      <button data-cat="pad">pad</button>
+      <button data-cat="arp">arp</button>
+      <button data-cat="melody">melody</button>
+    </div>
+    <div id="loops-list" class="loops-list"></div>
+    <div class="loops-hint">▸ preview · + add at the playhead · or drag onto a track</div>
+  </aside>
+
+  <aside id="chat-pane">
+    <div class="chat-head">producer</div>
+    <div id="log" class="log"></div>
+    <div class="quick">
+      <button data-cmd="add a beat">+ beat</button>
+      <button data-cmd="add a lofi beat">+ lofi</button>
+      <button data-cmd="add a trap beat">+ trap</button>
+      <button data-cmd="add a synth pad">+ pad</button>
+      <button data-cmd="add a bassline">+ bass</button>
+      <button data-cmd="add an arpeggio">+ arp</button>
+      <button data-cmd="make the harmonies wider">wider</button>
+      <button data-cmd="reset">reset</button>
+    </div>
+    <form id="chat-form">
+      <input id="chat-input" autocomplete="off"
+             placeholder="tell deejai what to do — 'the low part is too loud'…" />
+      <button type="submit">send</button>
+    </form>
+  </aside>
+ </div>
+
+  <div id="piano" class="hidden">
+    <div class="piano-head">
+      <span class="pt">piano roll · <b id="piano-name">—</b></span>
+      <label>instrument <select id="piano-inst"></select></label>
+      <label id="sample-load" class="tbtn" title="load a WAV to play chromatically" hidden>load sample<input id="sample-file" type="file" accept="audio/wav,.wav" hidden /></label>
+      <span class="pgrp">transpose
+        <button id="tr-down8" class="sm" title="down an octave">−12</button>
+        <button id="tr-down" class="sm" title="down a semitone">−</button>
+        <span id="tr-val" class="kv" style="min-width:34px;text-align:center">0</span>
+        <button id="tr-up" class="sm" title="up a semitone">+</button>
+        <button id="tr-up8" class="sm" title="up an octave">+12</button>
+      </span>
+      <span class="pgrp">quantize
+        <select id="q-div"><option value="1">1/4</option><option value="0.5" selected>1/8</option><option value="0.25">1/16</option></select>
+        <label class="qlbl">str<input id="q-str" type="range" min="0" max="1" step="0.05" value="1" /></label>
+        <label class="qlbl">swing<input id="q-swing" type="range" min="0" max="0.5" step="0.02" value="0" /></label>
+        <button id="q-apply" class="tbtn">apply</button>
+      </span>
+      <span class="pgrp">arp
+        <button id="arp-on" class="sm" title="arpeggiate chords on this track">◇</button>
+        <select id="arp-rate"><option value="0.5">1/8</option><option value="0.25">1/16</option><option value="1">1/4</option></select>
+        <select id="arp-mode"><option value="up">up</option><option value="down">down</option><option value="updown">up-down</option></select>
+      </span>
+      <button id="score-btn" class="tbtn toggle" title="notation (score) view">score</button>
+      <button id="score-flat" class="sm" title="respell the selected note as flat (↑/↓ = semitone)">♭</button>
+      <span class="hint">click to add · drag to move · alt-drag = velocity · Delete removes · play A–K, MIDI, or the keys below; play to record</span>
+      <button id="piano-close" class="tbtn">close</button>
+    </div>
+    <div class="piano-body">
+      <canvas id="piano-keys"></canvas>
+      <div id="piano-scroll"><canvas id="piano-grid"></canvas><div id="piano-playhead"></div></div>
+      <div id="score-scroll" class="hidden"><canvas id="score-canvas"></canvas></div>
+    </div>
+    <div id="mtk" class="mtk" title="click to play · records while the transport rolls"></div>
+  </div>
+
+  <div id="align" class="hidden">
+    <div class="help-card" style="width:min(440px,92vw)">
+      <div class="help-head"><b>align &amp; tune takes</b><button id="align-close" class="tbtn">close</button></div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:6px">
+        <label class="drow">timing reference
+          <select id="al-ref"><option value="">auto (lead vocal)</option></select>
+        </label>
+        <label class="drow">snap placement to
+          <select id="al-div"><option value="off">off (content only)</option><option value="4">bar · downbeat</option><option value="1" selected>beat</option><option value="0.5">½ beat</option></select>
+        </label>
+        <label class="drow">downbeat <span id="al-phase" style="color:var(--text)">auto</span>
+          <button id="al-setphase" class="tbtn" title="click, then click the ruler where beat 1 is">set on ruler</button>
+          <button id="al-clrphase" class="tbtn" title="use the detected downbeat">auto</button>
+        </label>
+        <label class="drow">pitch correct <input id="al-tune" type="range" min="0" max="1" step="0.05" value="0.5"><span class="kv" id="al-tune-v">50%</span></label>
+        <div style="color:var(--dim);font-size:12px">Re-positions each take by matching content, then snaps entries to the chosen grid. If a take comes in on the wrong beat (e.g. the 2 instead of the 1), use <b>bar · downbeat</b>. Pitch-correct gently nudges off notes toward the scale. Re-runs on your original takes.</div>
+        <button id="al-apply" class="tbtn" style="align-self:flex-start">re-align &amp; tune</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="drummer" class="hidden">
+    <div class="help-card" style="width:min(420px,92vw)">
+      <div class="help-head"><b>🥁 drummer</b><button id="drummer-close" class="tbtn">close</button></div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:6px">
+        <label class="drow">style
+          <select id="dr-style"><option value="pop">pop</option><option value="rock">rock</option><option value="lofi">lofi</option><option value="trap">trap</option><option value="house">house</option><option value="funk">funk</option><option value="disco">disco</option></select>
+        </label>
+        <label class="drow">intensity <input id="dr-int" type="range" min="0.6" max="1.1" step="0.05" value="0.9"></label>
+        <div style="color:var(--dim);font-size:12px">Fills the whole song with the groove (plus a fill every few bars). It's a drums instrument track — open its piano roll to edit, swap the kit, or add an arpeggiator.</div>
+        <button id="dr-create" class="tbtn" style="align-self:flex-start">create drum track</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="help" class="hidden">
+    <div class="help-card">
+      <div class="help-head"><b>deejai — controls &amp; shortcuts</b><button id="help-close" class="tbtn">close</button></div>
+      <div class="help-cols">
+        <div>
+          <h4>transport</h4>
+          <ul>
+            <li><b>space</b> play / stop</li>
+            <li><b>click ruler</b> move playhead</li>
+            <li><b>shift-drag ruler</b> set cycle region</li>
+            <li><b>⚑</b> add marker (right-click a marker to remove)</li>
+            <li><b>click / count-in</b> metronome + count-in a bar</li>
+          </ul>
+          <h4>regions</h4>
+          <ul>
+            <li><b>drag</b> move · <b>edge-drag</b> trim · <b>corner-drag</b> fade</li>
+            <li><b>alt-drag</b> region gain</li>
+            <li><b>✂</b> split at playhead · <b>⧉</b> duplicate · <b>⟳</b> loop-repeat</li>
+            <li><b>⌘C / ⌘X / ⌘V</b> copy / cut / paste · <b>Delete</b> remove</li>
+            <li><b>⊕T / T</b> comp: add other takes, pick per section</li>
+          </ul>
+        </div>
+        <div>
+          <h4>tracks</h4>
+          <ul>
+            <li><b>⋮⋮ drag</b> reorder · <b>M / S</b> mute / solo · <b>A</b> automation lane</li>
+            <li><b>★</b> set lead · <b>×</b> remove take</li>
+            <li><b>double-click name</b> rename · <b>click dot</b> recolor (instruments)</li>
+            <li><b>tune</b> (Smart Controls) correct a vocal — non-destructive</li>
+          </ul>
+          <h4>instruments &amp; piano roll</h4>
+          <ul>
+            <li><b>+ inst</b> add · lane opens the piano roll</li>
+            <li><b>A–K / Z X</b> play &amp; record · on-screen keys too · Web MIDI</li>
+            <li><b>alt-drag note</b> velocity · <b>quantize</b> / <b>transpose</b> / <b>arp</b> in the header</li>
+          </ul>
+          <h4>output</h4>
+          <ul>
+            <li><b>export wav</b> full-quality · <b>share</b> compressed</li>
+            <li><b>save / open</b> a .deejai project</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside id="smart">
+    <div class="smart-head">smart controls · <span id="smart-track">—</span></div>
+    <div class="smart-body">
+      <div class="knobgroup">
+        <div class="glabel">channel eq</div>
+        <div class="knobs">
+          <label>low<input id="eq-low" type="range" min="-12" max="12" step="0.5" value="0"><span class="kv" id="eq-low-v">0</span></label>
+          <label>mid<input id="eq-mid" type="range" min="-12" max="12" step="0.5" value="0"><span class="kv" id="eq-mid-v">0</span></label>
+          <label>high<input id="eq-high" type="range" min="-12" max="12" step="0.5" value="0"><span class="kv" id="eq-high-v">0</span></label>
+        </div>
+      </div>
+      <div class="knobgroup">
+        <div class="glabel">dynamics</div>
+        <div class="knobs">
+          <label>comp<input id="fx-comp" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="fx-comp-v">0%</span></label>
+          <label>drive<input id="fx-drive" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="fx-drive-v">0%</span></label>
+          <label>crush<input id="fx-crush" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="fx-crush-v">0%</span></label>
+        </div>
+      </div>
+      <div class="knobgroup">
+        <div class="glabel">mod</div>
+        <div class="knobs">
+          <label>rate<input id="mod-rate" type="range" min="0.1" max="8" step="0.1" value="3"><span class="kv" id="mod-rate-v">3.0</span></label>
+          <label>depth<input id="mod-depth" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="mod-depth-v">0%</span></label>
+          <label>fdbk<input id="mod-fb" type="range" min="0" max="0.9" step="0.01" value="0.15"><span class="kv" id="mod-fb-v">15%</span></label>
+        </div>
+      </div>
+      <div class="knobgroup">
+        <div class="glabel">reverb</div>
+        <div class="knobs">
+          <label>send<input id="rv-send" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="rv-send-v">0%</span></label>
+        </div>
+      </div>
+      <div class="knobgroup">
+        <div class="glabel">delay</div>
+        <div class="knobs">
+          <label>time<input id="dl-time" type="range" min="0.05" max="0.7" step="0.01" value="0.25"><span class="kv" id="dl-time-v">250</span></label>
+          <label>fb<input id="dl-fb" type="range" min="0" max="0.85" step="0.01" value="0.3"><span class="kv" id="dl-fb-v">30%</span></label>
+          <label>mix<input id="dl-mix" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="dl-mix-v">0%</span></label>
+        </div>
+      </div>
+      <div class="knobgroup">
+        <div class="glabel">channel</div>
+        <div class="knobs">
+          <label>vol<input id="sc-vol" type="range" min="0" max="1.5" step="0.01" value="1"><span class="kv" id="sc-vol-v">0 dB</span></label>
+          <label>pan<input id="sc-pan" type="range" min="-1" max="1" step="0.02" value="0"><span class="kv" id="sc-pan-v">C</span></label>
+        </div>
+      </div>
+      <div class="knobgroup">
+        <div class="glabel">pitch · beta</div>
+        <div class="knobs">
+          <label>tune<input id="tune-str" type="range" min="0" max="1" step="0.05" value="0.8"><span class="kv" id="tune-str-v">80%</span></label>
+          <label style="justify-content:flex-end"><button id="tune-apply" class="sm" title="correct this vocal toward the nearest notes" style="width:40px">tune</button></label>
+        </div>
+      </div>
+      <div class="knobgroup blend-grp">
+        <div class="glabel">vocal blend</div>
+        <div class="knobs">
+          <label>space<input id="bl-space" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="bl-space-v">0%</span></label>
+          <label>glue<input id="bl-glue" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="bl-glue-v">0%</span></label>
+          <label>air<input id="bl-air" type="range" min="0" max="12" step="0.5" value="0"><span class="kv" id="bl-air-v">0</span></label>
+          <label style="justify-content:flex-end"><button id="bl-auto" class="sm" title="auto-blend all vocals" style="width:40px">auto</button></label>
+        </div>
+      </div>
+      <div class="knobgroup master-grp">
+        <div class="glabel">master bus</div>
+        <div class="knobs">
+          <label>low<input id="m-low" type="range" min="-12" max="12" step="0.5" value="0"><span class="kv" id="m-low-v">0</span></label>
+          <label>high<input id="m-high" type="range" min="-12" max="12" step="0.5" value="0"><span class="kv" id="m-high-v">0</span></label>
+          <label>glue<input id="m-comp" type="range" min="0" max="1" step="0.01" value="0"><span class="kv" id="m-comp-v">0%</span></label>
+          <label>limit<button id="m-limit" class="sm" title="brickwall limiter">L</button></label>
+        </div>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script src="app.js?v=42"></script>
+</body>
+</html>

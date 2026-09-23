@@ -1,0 +1,104 @@
+
+
+# --- Standard publish exclusions ---
+# Environments and caches
+.venv*/
+*venv*/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+**/.pytest_cache/
+*.egg-info/
+build/
+node_modules/
+.DS_Store
+.Rhistory
+
+# Secrets
+.env*
+*.pem
+*.key
+credentials*
+token*.json
+keys/
+cookies*
+*.session
+
+# Model weights and checkpoints
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.h5
+*.onnx
+weights/
+checkpoints/
+
+# Raw and licensed data
+data/
+external/
+cache/
+ai-rcp-data/
+*.edf
+*.bdf
+*.nii
+*.nii.gz
+*.dcm
+*.mgz
+
+# Large run outputs
+logs/
+tmp/
+outputs/
+*.log
+*.npz
+*.npy
+*.zip
+
+# Agent and planning files
+HARNESS.md
+.mon_seen
+*PLAN*.md
+*SPINE*.md
+*_SCOPE.md
+PROJECT_REPORT*.md
+notes/
+scratch/
+*.tsbuildinfo
+*.tar.gz
+session.json
+
+# Keep
+!.env.example
+# Audio and generated sessions
+*.wav
+*.mp3
+*.aiff
+*.m4a
+kits/
+_backups/
+*-bak
+app_sessions/
+agent_demo/
+backing_test/
+beat_test/
+blend_session/
+demo_auto/
+demo_lofi_beat/
+demo_out/
+demo_takes/
+demo_trap_beat/
+doyou_out/
+doyou_out_noalign/
+doyou_produced/
+doyou_session/
+doyou_takes/
+full_demo/
+humanized_beat/
+my_session/
+sampled_beat_test/
+sampled_beat_trap/
+synced/
+xtreme_production/
